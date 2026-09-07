@@ -1,0 +1,38 @@
+# KB agent model configuration.
+#
+# cloud: Bedrock Mantle (google.gemma-4-26b-a4b) signed with SigV4 from the machine's
+#        exec-role creds — used when the agent runs as an aux4 cloud command-machine.
+#        IAM: the exec role needs bedrock-mantle:CreateInference / GetInference (SFA-018),
+#        NOT bedrock:InvokeModel.
+# local: local mlx (gemma-4-e4b) for dev testing on the host. The apiKey is a poison
+#        sentinel so an accidental hosted fallback fails fast instead of billing.
+config:
+  cloud:
+    model:
+      type: openai
+      config:
+        model: google.gemma-4-26b-a4b
+        maxTokens: 1024
+        temperature: 0
+        awsSigv4:
+          region: us-east-1
+          service: bedrock
+        configuration:
+          baseURL: https://bedrock-mantle.us-east-1.api.aws/openai/v1
+  local:
+    model:
+      type: openai
+      config:
+        model: mlx-community/gemma-4-e4b-it-bf16
+        apiKey: local-only-never-bill
+        maxTokens: 1024
+        temperature: 0
+        configuration:
+          baseURL: http://localhost:8381/v1
+  openai-mini:
+    model:
+      type: openai
+      config:
+        model: gpt-4o-mini
+        temperature: 0
+        maxTokens: 1024

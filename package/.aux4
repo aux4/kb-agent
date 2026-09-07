@@ -1,0 +1,76 @@
+{
+  "scope": "aux4",
+  "name": "kb-agent",
+  "version": "0.0.1",
+  "description": "KB Q&A agent plugin for aux4/agent-manager \u2014 answers from the aux4 knowledge base",
+  "dependencies": [
+    "aux4/ai-agent"
+  ],
+  "tags": [
+    "ai",
+    "agent",
+    "kb",
+    "plugin"
+  ],
+  "profiles": [
+    {
+      "name": "agent-manager",
+      "commands": [
+        {
+          "name": "kb",
+          "execute": [
+            "profile:agent-manager:kb"
+          ],
+          "help": {
+            "text": "KB Q&A agent: answers questions from the aux4 knowledge base"
+          }
+        }
+      ]
+    },
+    {
+      "name": "agent-manager:kb",
+      "commands": [
+        {
+          "name": "run",
+          "execute": [
+            "aux4 ai agent ask --configFile ${packageDir}/config.yaml param(config) --instructions ${packageDir}/instructions.md --tools executeAux4 --permissions value(permissions) --policy value(policy) value(question)"
+          ],
+          "help": {
+            "text": "Answer a question using the aux4 knowledge base (called by 'agent-manager ask --agent kb')",
+            "variables": [
+              {
+                "name": "question",
+                "text": "The question to answer from the KB",
+                "arg": true
+              },
+              {
+                "name": "config",
+                "text": "Model config section: cloud (Bedrock Mantle) or local (mlx)",
+                "default": "openai-mini"
+              },
+              {
+                "name": "permissions",
+                "text": "Tool allow-list (cross-VM kb calls only)",
+                "default": "{\"allow\":[\"aux4 cloud kb kb search *\",\"aux4 cloud kb kb view *\",\"aux4 cloud kb kb list\",\"aux4 cloud kb kb list *\"]}"
+              },
+              {
+                "name": "policy",
+                "text": "Guardrails (call budget)",
+                "default": "{\"budget\":{\"calls\":15}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "describe",
+          "execute": [
+            "echo '{\"name\":\"kb\",\"description\":\"Answers questions from the aux4 knowledge base\",\"tools\":[\"cloud kb kb search\",\"cloud kb kb view\",\"cloud kb kb list\"]}'"
+          ],
+          "help": {
+            "text": "Print this agent's metadata (name, description, tools)"
+          }
+        }
+      ]
+    }
+  ]
+}
