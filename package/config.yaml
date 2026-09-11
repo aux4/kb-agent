@@ -1,9 +1,10 @@
 # KB agent model configuration.
 #
-# cloud: Bedrock Mantle (google.gemma-4-26b-a4b) signed with SigV4 from the machine's
-#        exec-role creds — used when the agent runs as an aux4 cloud command-machine.
-#        IAM: the exec role needs bedrock-mantle:CreateInference / GetInference (SFA-018),
-#        NOT bedrock:InvokeModel.
+# cloud: routes to the aux4 INFERENCE-BROKER (a hosted OpenAI-compatible gateway that
+#        fronts Bedrock Mantle). The agent never touches Bedrock directly and needs NO
+#        Bedrock IAM — it authenticates to the broker with a per-scope m2m token
+#        (apiKey). The broker signs SigV4 to Mantle and meters per scope. baseURL is
+#        the dev broker for now; make it env-driven (per env) before prod. [SFA]
 # local: local mlx (gemma-4-e4b) for dev testing on the host. The apiKey is a poison
 #        sentinel so an accidental hosted fallback fails fast instead of billing.
 config:
@@ -11,14 +12,12 @@ config:
     model:
       type: openai
       config:
-        model: google.gemma-4-26b-a4b
+        model: google/gemma-4-26b-a4b
         maxTokens: 1024
         temperature: 0
-        awsSigv4:
-          region: us-east-1
-          service: bedrock
+        apiKey: broker-managed
         configuration:
-          baseURL: https://bedrock-mantle.us-east-1.api.aws/openai/v1
+          baseURL: https://aux4.on.dev.aux4.cloud/inference-broker/api/v1
   local:
     model:
       type: openai

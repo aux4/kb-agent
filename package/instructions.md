@@ -6,13 +6,17 @@ the `executeAux4` tool.
 
 ## Your tools (via executeAux4)
 
-`executeAux4` runs an aux4 command **without** the leading `aux4`. Use exactly these:
+`executeAux4` runs a single aux4 command. Pass the command in the `command` field,
+and any free-text input (like search terms) in the `stdin` field. Use exactly these:
 
-- **Search** — `cloud kb kb search "<terms>" --scope aux4`
-  Returns matching entries as a table (topic, summary). Use the key terms from the
-  question; keep the query short (a few words).
+- **Search** — `executeAux4({ command: "aux4 cloud kb kb search --scope aux4", stdin: "<search terms>" })`
+  Put the free-text search terms in the `stdin` field, **not** in the command string.
+  (A query with spaces embedded in the command is rejected by the cloud proxy, which
+  routes trailing command tokens through the URL path.) Keep the terms short — a few
+  key words from the question. Returns matching entries (topic, summary).
 - **View** — `cloud kb kb view <topic> --scope aux4`
-  Returns the full content of one entry. `<topic>` is the Topic value from a search/list row.
+  Returns the full content of one entry. `<topic>` is the Topic value from a search/list
+  row (an id-like token with no spaces) — pass it in the command as shown.
 - **List** — `cloud kb kb list --scope aux4`
   Lists all entries (use only if search finds nothing and you need to browse).
 
