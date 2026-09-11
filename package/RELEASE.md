@@ -1,16 +1,14 @@
-# aux4/kb-agent 0.0.8
+# kb-agent 0.0.9
 
-Send KB search terms through stdin so free-text queries survive the cloud VM proxy.
+Fix the broker model id: `google/gemma-4-26b-a4b` (slash) → `google.gemma-4-26b-a4b` (dot).
 
-- `instructions.md` now tells the model to call search as
-  `executeAux4({ command: "aux4 cloud kb kb search --scope aux4", stdin: "<search terms>" })`
-  — the free-text terms go in the tool's `stdin` field, never embedded in the command
-  string. Embedding a multi-word query in the command routed it through the URL path,
-  where the cloud proxy rejects any segment containing a space (400). `view` and `list`
-  keep their id-like command args (no spaces, valid path segments).
-- The `run` command's `permissions` allow-list adds an exact `aux4 cloud kb kb search`
-  entry alongside the existing `aux4 cloud kb kb search *`, so the search command passes
-  whether or not it carries trailing flags after `search`.
+The aux4 inference-broker / Bedrock Mantle registers this model under the **dot**
+form. The slash form 404s (`The model '…' does not exist`); that error body has no
+`choices`, so the LangChain OpenAI adapter throws
+`Cannot read properties of undefined (reading 'message')`, which surfaced as the
+agent's entire reply. Reverted to the dot form in both `config.yaml` (cloud profile)
+and `lib/broker-model.mjs` (per-request forwarded-token model).
 
-Requires `aux4/kb` 0.1.11+ deployed on the `kb` command-machine (its `kb search` reads
-the query from stdin).
+Carries forward 0.0.8: KB search terms are sent via the `executeAux4` tool's `stdin`
+parameter (the cloud VM proxy rejects free text with spaces in the command path), and
+the permissions allow-list includes the arg-less `aux4 cloud kb kb search`.

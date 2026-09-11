@@ -1,7 +1,7 @@
 {
   "scope": "aux4",
   "name": "kb-agent",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "KB Q&A agent plugin for aux4/agent-manager \u2014 answers from the aux4 knowledge base",
   "dependencies": [
     "aux4/ai-agent"

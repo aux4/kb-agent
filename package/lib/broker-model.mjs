@@ -26,7 +26,7 @@ export function brokerModel(rawToken, baseURL) {
   return JSON.stringify({
     type: "openai",
     config: {
-      model: "google/gemma-4-26b-a4b",
+      model: "google.gemma-4-26b-a4b",
       apiKey: token,
       maxTokens: 1024,
       temperature: 0,
