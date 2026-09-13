@@ -40,3 +40,7 @@ The package also exposes `agent-manager kb orchestrate` with `call-llm`,
 implement for Step Functions. Planning and resume state lives under the Cloud
 VM's automatically synchronized local state directory, while tool calls use the
 normal `aux4/ai-agent` registry and the execution's request-local user token.
+
+The agent treats matching passages returned by `kb search` as answer-grade KB
+content. It calls `kb view` only when a search passage is incomplete or ambiguous,
+avoiding an unnecessary remote tool call and model pass for straightforward matches.

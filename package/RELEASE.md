@@ -1,3 +1,10 @@
+# kb-agent 0.0.11
+
+Reduces answer latency for straightforward KB matches. `kb search` already returns
+matching passages, so the agent may now answer directly from those passages and calls
+`kb view` only when it needs more context. This removes one remote Cloud command and
+one model pass from the common case while preserving citations and KB-only grounding.
+
 # kb-agent 0.0.10
 
 Adds the standard durable-agent command contract:
