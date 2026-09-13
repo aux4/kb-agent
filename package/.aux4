@@ -1,7 +1,7 @@
 {
   "scope": "aux4",
   "name": "kb-agent",
-  "version": "0.0.9",
+  "version": "0.0.11",
   "description": "KB Q&A agent plugin for aux4/agent-manager \u2014 answers from the aux4 knowledge base",
   "dependencies": [
     "aux4/ai-agent"
@@ -33,7 +33,7 @@
         {
           "name": "run",
           "execute": [
-            "# MODEL auth: when --token is set, the caller's aux4 token is forwarded to the INFERENCE-BROKER via an ai-agent --model override (openai type, apiKey=token, broker baseURL) so model metering is attributed to the caller \u2014 lib/broker-model.mjs builds that JSON. TOOL auth is SEPARATE: the executeAux4 tool (aux4 cloud kb ...) runs through the api machine's warm daemon (aux4/api strips AUX4_NO_DAEMON for route-command children), so a per-request inline env does NOT reach it \u2014 the tool authenticates with the AGENT MACHINE's own identity via AUX4_ACCESS_TOKEN in the MACHINE env (the agent's per-scope m2m credential; SFA-054), which the daemon carries. AUX4_CLOUD_API_URL also comes from the machine env. When --token is empty, fall back to the configured model profile (config.yaml). NOTE: broker baseURL is dev-only for now; make it env-driven via AUX4_INFERENCE_URL before prod. [SFA]",
+            "# The caller's request-local AUX4_ACCESS_TOKEN is used for both inference-broker metering and executeAux4/aux4-cloud tool calls. It is inherited through the command environment and is never installed as a machine-wide credential. An explicit --token remains supported for backward-compatible CLI use. When no user token is available, fall back to the configured model profile. AUX4_INFERENCE_URL selects the broker endpoint.",
             "set:modelJson=!node ${packageDir}/lib/broker-model.mjs value(token)",
             "{ if(token!=) && aux4 ai agent ask --model value(modelJson) --instructions ${packageDir}/instructions.md --tools executeAux4 --permissions value(permissions) --policy value(policy) value(question); } || { if(token==) && aux4 ai agent ask --configFile ${packageDir}/config.yaml param(config) --instructions ${packageDir}/instructions.md --tools executeAux4 --permissions value(permissions) --policy value(policy) value(question); }"
           ],
@@ -52,7 +52,8 @@
               },
               {
                 "name": "token",
-                "text": "Caller's aux4 bearer token (forwarded by agent-host ask-api). When set, the agent calls the inference-broker with this token instead of the configured model profile.",
+                "text": "Caller's aux4 bearer token. Normally inherited request-locally from AUX4_ACCESS_TOKEN; an explicit flag remains supported for CLI compatibility.",
+                "env": "AUX4_ACCESS_TOKEN",
                 "default": ""
               },
               {
@@ -69,12 +70,109 @@
           }
         },
         {
+          "name": "orchestrate",
+          "execute": [
+            "profile:agent-manager:kb:orchestrate"
+          ],
+          "help": {
+            "text": "Durable plan/tool/resume primitives used by the standard agent Step Functions loop"
+          }
+        },
+        {
           "name": "describe",
           "execute": [
             "echo '{\"name\":\"kb\",\"description\":\"Answers questions from the aux4 knowledge base\",\"tools\":[\"cloud kb kb search\",\"cloud kb kb view\",\"cloud kb kb list\"]}'"
           ],
           "help": {
             "text": "Print this agent's metadata (name, description, tools)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "agent-manager:kb:orchestrate",
+      "commands": [
+        {
+          "name": "call-llm",
+          "execute": [
+            "set:modelJson=!node ${packageDir}/lib/broker-model.mjs value(accessToken)",
+            "aux4 ai agent plan --model value(modelJson) --instructions ${packageDir}/instructions.md --tools executeAux4 --permissions value(permissions) --history value(history) --question value(message)"
+          ],
+          "help": {
+            "text": "Run one planning turn and persist the session history",
+            "variables": [
+              {
+                "name": "message",
+                "text": "User message",
+                "default": ""
+              },
+              {
+                "name": "history",
+                "text": "Durable history path managed by the Cloud VM file-sync runtime"
+              },
+              {
+                "name": "accessToken",
+                "text": "Short-lived execution delegation injected by the VM runtime",
+                "env": "AUX4_ACCESS_TOKEN"
+              },
+              {
+                "name": "permissions",
+                "text": "Tool allow-list",
+                "default": "{\"allow\":[\"aux4 cloud kb kb search\",\"aux4 cloud kb kb search *\",\"aux4 cloud kb kb view *\",\"aux4 cloud kb kb list\",\"aux4 cloud kb kb list *\"]}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "run-tool",
+          "execute": [
+            "aux4 ai agent run-tool value(toolCall) --tools executeAux4 --permissions value(permissions)"
+          ],
+          "help": {
+            "text": "Execute one tool call through the standard ai-agent registry",
+            "variables": [
+              {
+                "name": "toolCall",
+                "text": "Tool call object from the planning decision",
+                "arg": true
+              },
+              {
+                "name": "permissions",
+                "text": "Tool allow-list",
+                "default": "{\"allow\":[\"aux4 cloud kb kb search\",\"aux4 cloud kb kb search *\",\"aux4 cloud kb kb view *\",\"aux4 cloud kb kb list\",\"aux4 cloud kb kb list *\"]}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "apply-results",
+          "execute": [
+            "set:modelJson=!node ${packageDir}/lib/broker-model.mjs value(accessToken)",
+            "aux4 ai agent resume --model value(modelJson) --instructions ${packageDir}/instructions.md --tools executeAux4 --permissions value(permissions) --history value(history) --toolResults value(toolResults)"
+          ],
+          "help": {
+            "text": "Apply tool results and run one more planning turn",
+            "variables": [
+              {
+                "name": "toolResults",
+                "text": "Array of tool results",
+                "arg": true
+              },
+              {
+                "name": "history",
+                "text": "Durable history path managed by the Cloud VM file-sync runtime"
+              },
+              {
+                "name": "accessToken",
+                "text": "Short-lived execution delegation injected by the VM runtime",
+                "env": "AUX4_ACCESS_TOKEN"
+              },
+              {
+                "name": "permissions",
+                "text": "Tool allow-list",
+                "default": "{\"allow\":[\"aux4 cloud kb kb search\",\"aux4 cloud kb kb search *\",\"aux4 cloud kb kb view *\",\"aux4 cloud kb kb list\",\"aux4 cloud kb kb list *\"]}"
+              }
+            ]
           }
         }
       ]

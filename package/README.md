@@ -25,9 +25,22 @@ mechanism, so shell metacharacters in the question are delivered as literal text
 ### Model selection
 
 By default `run` uses the model profile from `config.yaml` (`--config`, default `cloud`).
-When it is handed a `--token` (the caller's aux4 bearer token, forwarded by
-`aux4/agent-host`'s `ask-api`), it instead overrides the model to call the **inference
-broker** with that token (`type: openai`, `apiKey=<token>`, broker `baseURL`). The broker
+The host normally injects the caller's bearer token request-locally as
+`AUX4_ACCESS_TOKEN`. The agent uses it for both the **inference broker** and
+executeAux4/Cloud tool calls; it is never installed as a machine-wide credential.
+An explicit `--token` remains supported for backward-compatible CLI calls. The broker
 then meters and quota-checks the **caller's** scope rather than a shared machine credential.
 The broker `baseURL` defaults to the dev broker and is overridable via the
 `AUX4_INFERENCE_URL` environment variable.
+
+### Durable execution
+
+The package also exposes `agent-manager kb orchestrate` with `call-llm`,
+`run-tool`, and `apply-results`. This is the same contract any agent package can
+implement for Step Functions. Planning and resume state lives under the Cloud
+VM's automatically synchronized local state directory, while tool calls use the
+normal `aux4/ai-agent` registry and the execution's request-local user token.
+
+The agent treats matching passages returned by `kb search` as answer-grade KB
+content. It calls `kb view` only when a search passage is incomplete or ambiguous,
+avoiding an unnecessary remote tool call and model pass for straightforward matches.
