@@ -10,11 +10,48 @@ argument and selects the right model.
 
 ```file:.aux4
 {
+  "profiles": [
+    {
+      "name": "ai:agent",
+      "commands": [
+        {
+          "name": "run-tool",
+          "execute": ["echo should-be-replaced"],
+          "help": {
+            "text": "Hermetic stand-in for the unreleased ai-agent run-tool command",
+            "variables": [
+              { "name": "toolCall", "arg": true },
+              { "name": "tools", "default": "" },
+              { "name": "permissions", "default": "{}" }
+            ]
+          }
+        }
+      ]
+    }
+  ],
   "hooks": [
     {
       "command": "*/ask",
       "replace": [
         "printf 'ANSWER: %s | MODEL: %s\\n' value(question) value(model)"
+      ]
+    },
+    {
+      "command": "ai:agent/plan",
+      "replace": [
+        "printf 'PLAN: %s | HISTORY: %s | TOOLS: %s\\n' value(question) value(history) value(tools)"
+      ]
+    },
+    {
+      "command": "ai:agent/run-tool",
+      "replace": [
+        "printf 'TOOL: %s | TOOLS: %s\\n' value(toolCall) value(tools)"
+      ]
+    },
+    {
+      "command": "ai:agent/resume",
+      "replace": [
+        "printf 'RESUME: %s | HISTORY: %s | TOOLS: %s\\n' value(toolResults) value(history) value(tools)"
       ]
     }
   ]
@@ -70,4 +107,46 @@ aux4 agent-manager kb run "What is aux4?" --token "bare-token-xyz"
 
 ```expect:partial
 ANSWER: What is aux4? | MODEL: *"apiKey":"bare-token-xyz"*
+```
+
+### the host can inject the token only through the request-local environment
+
+```execute
+AUX4_ACCESS_TOKEN=environment-token-xyz aux4 agent-manager kb run "What is aux4?"
+```
+
+```expect:partial
+ANSWER: What is aux4? | MODEL: *"apiKey":"environment-token-xyz"*
+```
+
+## exposes the generic durable orchestration contract
+
+### call-llm delegates one planning turn to ai-agent
+
+```execute
+AUX4_ACCESS_TOKEN=test-execution-token aux4 agent-manager kb orchestrate call-llm --message "Find the architecture" --history /tmp/state/agent-sessions/run-1.json
+```
+
+```expect:partial
+PLAN: Find the architecture | HISTORY: /tmp/state/agent-sessions/run-1.json | TOOLS: executeAux4
+```
+
+### run-tool uses ai-agent's shared tool registry
+
+```execute
+aux4 agent-manager kb orchestrate run-tool '{"id":"call-1","name":"executeAux4","arguments":{"command":"aux4 cloud kb kb search architecture"}}'
+```
+
+```expect:partial
+TOOL: *"id":"call-1"*"name":"executeAux4"* | TOOLS: executeAux4
+```
+
+### apply-results resumes from the synchronized history checkpoint
+
+```execute
+AUX4_ACCESS_TOKEN=test-execution-token aux4 agent-manager kb orchestrate apply-results '[{"id":"call-1","content":"found"}]' --history /tmp/state/agent-sessions/run-1.json
+```
+
+```expect:partial
+RESUME: *"id":"call-1"*"content":"found"* | HISTORY: /tmp/state/agent-sessions/run-1.json | TOOLS: executeAux4
 ```
