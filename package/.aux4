@@ -1,7 +1,7 @@
 {
   "scope": "aux4",
   "name": "kb-agent",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "KB Q&A agent plugin for aux4/agent-manager \u2014 answers from the aux4 knowledge base",
   "dependencies": [
     "aux4/ai-agent"
@@ -179,24 +179,24 @@
           "name": "run-tools-and-resume",
           "execute": [
             "set:modelJson=!node ${packageDir}/lib/broker-model.mjs value(accessToken)",
-            "aux4 ai agent run-tools-and-resume --model value(modelJson) --instructions ${packageDir}/instructions.md --tools executeAux4 --permissions value(permissions) --history value(history) --historySeed value(historySeed) value(toolCalls)"
+            "aux4 ai agent run-tools-and-resume --model value(modelJson) --instructions ${packageDir}/instructions.md --tools executeAux4 --permissions value(permissions) --history value(history) --historySeedBase64 value(historySeedBase64) --toolCallsBase64 value(toolCallsBase64)"
           ],
           "help": {
             "text": "Execute the requested tool batch and resume one planning turn in a single bounded invocation",
             "variables": [
               {
-                "name": "toolCalls",
-                "text": "Tool-call object or array from the planning decision",
-                "arg": true
-              },
-              {
                 "name": "history",
                 "text": "Durable history path managed by the Cloud VM file-sync runtime"
               },
               {
-                "name": "historySeed",
-                "text": "Optional exact checkpoint from a planning turn completed before the workflow started",
-                "default": ""
+                "name": "toolCallsBase64",
+                "text": "Base64-encoded tool-call JSON for shell-safe workflow transport",
+                "default": "-"
+              },
+              {
+                "name": "historySeedBase64",
+                "text": "Base64-encoded history checkpoint JSON for shell-safe workflow transport",
+                "default": "-"
               },
               {
                 "name": "accessToken",

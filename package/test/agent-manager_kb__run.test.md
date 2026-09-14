@@ -32,9 +32,9 @@ argument and selects the right model.
           "help": {
             "text": "Hermetic stand-in for the fused ai-agent command",
             "variables": [
-              { "name": "toolCalls", "arg": true },
               { "name": "history", "default": "" },
-              { "name": "historySeed", "default": "" },
+              { "name": "toolCallsBase64", "default": "-" },
+              { "name": "historySeedBase64", "default": "-" },
               { "name": "model", "default": "{}" },
               { "name": "instructions", "default": "" },
               { "name": "tools", "default": "" },
@@ -73,7 +73,7 @@ argument and selects the right model.
     {
       "command": "ai:agent/run-tools-and-resume",
       "replace": [
-        "printf 'FUSED: %s | HISTORY: %s | SEED: %s | TOOLS: %s\\n' value(toolCalls) value(history) value(historySeed) value(tools)"
+        "printf 'FUSED: HISTORY: %s | CALLS_B64: %s | SEED_B64: %s | TOOLS: %s\\n' value(history) value(toolCallsBase64) value(historySeedBase64) value(tools)"
       ]
     }
   ]
@@ -173,12 +173,12 @@ AUX4_ACCESS_TOKEN=test-execution-token aux4 agent-manager kb orchestrate apply-r
 RESUME: *"id":"call-1"*"content":"found"* | HISTORY: /tmp/state/agent-sessions/run-1.json | TOOLS: executeAux4
 ```
 
-### run-tools-and-resume keeps the initial checkpoint and tool batch intact
+### run-tools-and-resume forwards base64-safe workflow payloads
 
 ```execute
-AUX4_ACCESS_TOKEN=test-execution-token aux4 agent-manager kb orchestrate run-tools-and-resume '[{"id":"call-1","name":"executeAux4","arguments":{"command":"aux4 cloud kb kb search architecture"}}]' --history /tmp/state/agent-sessions/run-1.json --historySeed '{"messages":[{"role":"user","content":"Find the architecture"}]}'
+AUX4_ACCESS_TOKEN=test-execution-token aux4 agent-manager kb orchestrate run-tools-and-resume --history /tmp/state/agent-sessions/run-2.json --toolCallsBase64 W3siaWQiOiJjYWxsLTEifV0= --historySeedBase64 eyJtZXNzYWdlcyI6W119
 ```
 
 ```expect:partial
-FUSED: *"id":"call-1"*"name":"executeAux4"* | HISTORY: /tmp/state/agent-sessions/run-1.json | SEED: *"role":"user"* | TOOLS: executeAux4
+CALLS_B64: W3siaWQiOiJjYWxsLTEifV0= | SEED_B64: eyJtZXNzYWdlcyI6W119 | TOOLS: executeAux4
 ```

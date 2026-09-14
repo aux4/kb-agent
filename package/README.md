@@ -43,7 +43,9 @@ normal `aux4/ai-agent` registry and the execution's request-local user token.
 
 `run-tools-and-resume` is appropriate when the complete tool batch is expected to
 finish within one Lambda invocation. It removes a workflow transition and a second
-package/tool bootstrap. Agents with long-waiting tools keep the separate commands.
+package/tool bootstrap. Workflow payloads use the base64 inputs for history and tool
+JSON so command/shell parsing cannot alter embedded quotes. Agents with long-waiting
+tools keep the separate commands.
 
 The agent treats matching passages returned by `kb search` as answer-grade KB
 content. It calls `kb view` only when a search passage is incomplete or ambiguous,

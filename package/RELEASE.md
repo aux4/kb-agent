@@ -1,3 +1,8 @@
+# kb-agent 0.0.13
+
+Carries the fused history checkpoint and tool-call batch through the base64-safe
+aux4/ai-agent inputs, preserving structured JSON across workflow command boundaries.
+
 # kb-agent 0.0.12
 
 Adds the opt-in `agent-manager kb orchestrate run-tools-and-resume` command. It
