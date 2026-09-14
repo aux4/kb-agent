@@ -25,6 +25,22 @@ argument and selects the right model.
               { "name": "permissions", "default": "{}" }
             ]
           }
+        },
+        {
+          "name": "run-tools-and-resume",
+          "execute": ["echo should-be-replaced"],
+          "help": {
+            "text": "Hermetic stand-in for the fused ai-agent command",
+            "variables": [
+              { "name": "toolCalls", "arg": true },
+              { "name": "history", "default": "" },
+              { "name": "historySeed", "default": "" },
+              { "name": "model", "default": "{}" },
+              { "name": "instructions", "default": "" },
+              { "name": "tools", "default": "" },
+              { "name": "permissions", "default": "{}" }
+            ]
+          }
         }
       ]
     }
@@ -52,6 +68,12 @@ argument and selects the right model.
       "command": "ai:agent/resume",
       "replace": [
         "printf 'RESUME: %s | HISTORY: %s | TOOLS: %s\\n' value(toolResults) value(history) value(tools)"
+      ]
+    },
+    {
+      "command": "ai:agent/run-tools-and-resume",
+      "replace": [
+        "printf 'FUSED: %s | HISTORY: %s | SEED: %s | TOOLS: %s\\n' value(toolCalls) value(history) value(historySeed) value(tools)"
       ]
     }
   ]
@@ -149,4 +171,14 @@ AUX4_ACCESS_TOKEN=test-execution-token aux4 agent-manager kb orchestrate apply-r
 
 ```expect:partial
 RESUME: *"id":"call-1"*"content":"found"* | HISTORY: /tmp/state/agent-sessions/run-1.json | TOOLS: executeAux4
+```
+
+### run-tools-and-resume keeps the initial checkpoint and tool batch intact
+
+```execute
+AUX4_ACCESS_TOKEN=test-execution-token aux4 agent-manager kb orchestrate run-tools-and-resume '[{"id":"call-1","name":"executeAux4","arguments":{"command":"aux4 cloud kb kb search architecture"}}]' --history /tmp/state/agent-sessions/run-1.json --historySeed '{"messages":[{"role":"user","content":"Find the architecture"}]}'
+```
+
+```expect:partial
+FUSED: *"id":"call-1"*"name":"executeAux4"* | HISTORY: /tmp/state/agent-sessions/run-1.json | SEED: *"role":"user"* | TOOLS: executeAux4
 ```

@@ -36,10 +36,14 @@ The broker `baseURL` defaults to the dev broker and is overridable via the
 ### Durable execution
 
 The package also exposes `agent-manager kb orchestrate` with `call-llm`,
-`run-tool`, and `apply-results`. This is the same contract any agent package can
+`run-tool`, `apply-results`, and the opt-in bounded `run-tools-and-resume`. This is the same contract any agent package can
 implement for Step Functions. Planning and resume state lives under the Cloud
 VM's automatically synchronized local state directory, while tool calls use the
 normal `aux4/ai-agent` registry and the execution's request-local user token.
+
+`run-tools-and-resume` is appropriate when the complete tool batch is expected to
+finish within one Lambda invocation. It removes a workflow transition and a second
+package/tool bootstrap. Agents with long-waiting tools keep the separate commands.
 
 The agent treats matching passages returned by `kb search` as answer-grade KB
 content. It calls `kb view` only when a search passage is incomplete or ambiguous,

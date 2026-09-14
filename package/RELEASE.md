@@ -1,3 +1,11 @@
+# kb-agent 0.0.12
+
+Adds the opt-in `agent-manager kb orchestrate run-tools-and-resume` command. It
+uses the generic aux4/ai-agent primitive to execute the complete KB tool batch,
+seed the exact first-decision checkpoint when needed, and perform the next model
+turn within one bounded Lambda invocation. The separate durable commands remain
+available for compatibility.
+
 # kb-agent 0.0.11
 
 Reduces answer latency for straightforward KB matches. `kb search` already returns

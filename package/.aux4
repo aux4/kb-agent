@@ -1,7 +1,7 @@
 {
   "scope": "aux4",
   "name": "kb-agent",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "KB Q&A agent plugin for aux4/agent-manager \u2014 answers from the aux4 knowledge base",
   "dependencies": [
     "aux4/ai-agent"
@@ -161,6 +161,42 @@
               {
                 "name": "history",
                 "text": "Durable history path managed by the Cloud VM file-sync runtime"
+              },
+              {
+                "name": "accessToken",
+                "text": "Short-lived execution delegation injected by the VM runtime",
+                "env": "AUX4_ACCESS_TOKEN"
+              },
+              {
+                "name": "permissions",
+                "text": "Tool allow-list",
+                "default": "{\"allow\":[\"aux4 cloud kb kb search\",\"aux4 cloud kb kb search *\",\"aux4 cloud kb kb view *\",\"aux4 cloud kb kb list\",\"aux4 cloud kb kb list *\"]}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "run-tools-and-resume",
+          "execute": [
+            "set:modelJson=!node ${packageDir}/lib/broker-model.mjs value(accessToken)",
+            "aux4 ai agent run-tools-and-resume --model value(modelJson) --instructions ${packageDir}/instructions.md --tools executeAux4 --permissions value(permissions) --history value(history) --historySeed value(historySeed) value(toolCalls)"
+          ],
+          "help": {
+            "text": "Execute the requested tool batch and resume one planning turn in a single bounded invocation",
+            "variables": [
+              {
+                "name": "toolCalls",
+                "text": "Tool-call object or array from the planning decision",
+                "arg": true
+              },
+              {
+                "name": "history",
+                "text": "Durable history path managed by the Cloud VM file-sync runtime"
+              },
+              {
+                "name": "historySeed",
+                "text": "Optional exact checkpoint from a planning turn completed before the workflow started",
+                "default": ""
               },
               {
                 "name": "accessToken",
